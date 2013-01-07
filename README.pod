@@ -1,0 +1,50 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Arriba - PSGI web server with SPDY support
+
+=head1 VERSION
+
+version 0.01
+
+=head1 DESCRIPTION
+
+Description coming soonish.
+
+=head1 SEE ALSO
+
+Please see those modules/websites for more information related to this module.
+
+=over 4
+
+=item *
+
+L<Starman>
+
+=item *
+
+L<Net::Server::PreFork>
+
+=back
+
+=head1 AUTHOR
+
+Michal Wojciechowski <odyniec@cpan.org>
+
+=head1 ACKNOWLEDGEMENTS
+
+Basic server code and plain HTTP connection support is based on L<Starman>,
+written by Tatsuhiko Miyagawa.
+
+SPDY support is provided by L<Net::SPDY>, written by Lubomir Rintel.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Michal Wojciechowski.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+

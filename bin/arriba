@@ -1,0 +1,37 @@
+#!/usr/bin/env perl
+# PODNAME: arriba
+
+use strict;
+use Plack::Runner;
+
+sub version {
+    require Arriba;
+    print "Arriba $Arriba::VERSION\n";
+}
+ 
+my @args = (server => 'Arriba', env => 'deployment', version_cb => \&version);
+my @argv = @ARGV;
+
+my $runner = Plack::Runner->new(@args);
+$runner->parse_options(@argv);
+
+$runner->set_options(argv => \@argv);
+$runner->run;
+
+__END__
+
+=head1 NAME
+
+arriba - Arriba launcher
+
+=head1 SYNOPSIS
+
+    arriba --listen :5443 --listen-ssl 5443 --ssl-cert-file cert.pem \
+        --ssl-key-file key.pem --enable-spdy
+
+=head1 SEE ALSO
+
+L<Arriba>
+
+=cut
+
