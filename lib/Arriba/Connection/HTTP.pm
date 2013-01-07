@@ -1,5 +1,8 @@
 package Arriba::Connection::HTTP;
 
+use warnings;
+use strict;
+
 use Data::Dump qw(dump);
 use HTTP::Status qw(status_message);
 use IO::Socket qw(:crlf);

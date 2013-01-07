@@ -1,5 +1,8 @@
 package Arriba::Connection;
 
+use warnings;
+use strict;
+
 use Arriba::Request;
 
 sub new {

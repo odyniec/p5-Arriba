@@ -1,5 +1,8 @@
 package Arriba::Connection::SPDY;
 
+use warnings;
+use strict;
+
 use HTTP::Date;
 use IO::Socket qw(:crlf);
 use Net::SPDY::Session;
