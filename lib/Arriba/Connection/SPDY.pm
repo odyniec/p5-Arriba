@@ -39,7 +39,9 @@ sub read_request {
             # Request initiated
             $req = Arriba::Request->new($self);
             $req->{_spdy} = {
+                # Keep track of this request's stream ID
                 stream_id => $frame{stream_id},
+                # Save a reference to the frame that initiated this request
                 frame => \%frame,
             };
 
@@ -93,60 +95,6 @@ sub read_request {
 
         return $req;
     }
-}
-
-sub read_headers {
-    my $self = shift;
-    my $req = shift;
-
-    my $session = $self->{_spdy}->{session};
-    my $streams = $self->{_spdy}->{streams};
-
-    while (my %frame = $session->process_frame) {
-        if ($frame{type} == Net::SPDY::Framer::SYN_STREAM &&
-            $frame{flags} & Net::SPDY::Framer::FLAG_FIN)
-        {
-            $streams->{$frame{stream_id}} = {
-                # Insert stream info here
-                req => undef,
-            };
-
-            $req->{_spdy} = {
-                # Keep track of this request's stream ID
-                stream_id => $frame{stream_id},
-                # Save a reference to the frame that initiated this request
-                frame => \%frame,
-            };
-
-            my %frame_headers = @{$frame{headers}};
-
-            my $headers = '';
-            # Construct the HTTP request line
-            $headers .= delete($frame_headers{':method'})  . ' ' .
-                delete($frame_headers{':path'}) . ' ' .
-                delete($frame_headers{':version'}) . $CRLF;
-
-            $req->{scheme} = delete $frame_headers{':scheme'};
-
-            if ($frame_headers{':host'}) {
-                $headers .= 'host: ' . delete($frame_headers{':host'}) . $CRLF;
-            }
-            
-            map { $headers .= "$_: $frame_headers{$_}$CRLF" }
-                keys %frame_headers;
-
-            $headers .= $CRLF;
-
-            return $headers;
-        }
-    }
-}
-
-sub read_body {
-    my $self = shift;
-    my $req = shift;
-
-    return $req->{_spdy}->{frame}->{data};
 }
 
 sub write_response {
