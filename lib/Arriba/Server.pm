@@ -40,7 +40,8 @@ sub parse_listen_options {
             my($h, $p) = split /:/, $listen, 2;
             push @$host, $h || '*';
             push @$port, $p;
-            push @$proto, $p == $listen_ssl ? 'ssl' : 'tcp';
+            push @$proto, $listen_ssl eq '*' || $p == $listen_ssl ?
+                'ssl' : 'tcp';
         } else {
             push @$host, 'localhost';
             push @$port, $listen;
