@@ -187,12 +187,22 @@ sub write_response {
     if (defined $res->[2]) {
         Plack::Util::foreach($res->[2], sub {
             my $buffer = $_[0];
+            my ($len, $offset);
+
             if ($chunked) {
-                my $len = length $buffer;
+                $len = length $buffer;
                 return unless $len;
                 $buffer = sprintf( "%x", $len ) . $CRLF . $buffer . $CRLF;
             }
-            syswrite $self->{client}, $buffer;
+            
+            $len = length $buffer;
+            $offset = 0;
+            while ($len) {
+                my $written = syswrite $self->{client}, $buffer, $len, $offset;
+                # TODO: Handle errors maybe?
+                $len -= $written;
+                $offset += $written;
+            }
         });
  
         syswrite $self->{client}, "0$CRLF$CRLF" if $chunked;
