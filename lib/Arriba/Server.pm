@@ -9,7 +9,6 @@ use HTTP::Date;
 use HTTP::Status qw(status_message);
 use HTTP::Parser::XS qw(parse_http_request);
 use IO::Socket::SSL;
-use Net::SPDY::Session;
 
 use Plack::Util;
 use Plack::TempBuffer;
