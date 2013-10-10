@@ -17,6 +17,7 @@ use base 'Arriba::Connection';
 # our own version of this method.
 {
     no strict 'refs';
+    no warnings 'redefine';
     *{"Net::SPDY::Session::process_frame"} = sub {
         my $self = shift;
 
