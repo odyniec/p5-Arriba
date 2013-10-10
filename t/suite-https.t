@@ -2,31 +2,28 @@ use warnings;
 use strict;
 
 use HTTP::Request::Common;
-use LWP::UserAgent;
+use Plack::LWPish;
 use Plack::Test::Suite;
 use Test::More;
 
-# Redefine LWP::UserAgent::prepare_request to change protocol to HTTPS
+# Redefine Plack::LWPish::request to change protocol to HTTPS
 # (yes, this is a dirty hack)
-
-my $_LWP_UserAgent_prepare_request = \&LWP::UserAgent::prepare_request;
-
-sub LWP_UserAgent_prepare_request {
-    my ($self, $request) = @_;
-    my $url = $request->uri;
-    $url =~ s{^http://}{https://};
-    $request->uri($url);
-    return &$_LWP_UserAgent_prepare_request($self, $request);
-}
-
 {
     no strict 'refs';
     no warnings 'redefine';
-    *{'LWP::UserAgent::prepare_request'} = \&LWP_UserAgent_prepare_request;
-}
+    
+    my $_Plack_LWPish_request = \&Plack::LWPish::request;
 
-# Skip SSL hostname verification
-$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+    *{'Plack::LWPish::request'} = sub {
+        my ($self, $req) = @_;
+
+        my $url = $req->uri;
+        $url =~ s{^http://}{https://};
+        $req->uri($url);
+        
+        return &$_Plack_LWPish_request($self, $req);
+    };
+}
 
 # Test subroutine to replace the original "psgi.url_scheme" test and accept
 # "https" as a correct response
@@ -47,4 +44,3 @@ Plack::Test::Suite->run_server_tests('Arriba', undef, undef, listen_ssl => '*',
     ssl_key_file => 'certs/server-key.pem');
 
 done_testing();
-
