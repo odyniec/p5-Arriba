@@ -12,6 +12,43 @@ use Arriba::Request;
 
 use base 'Arriba::Connection';
 
+# The current version of Net::SPDY::Session has some debugging code in the
+# process_frame method, which breaks things. Until that gets fixed, we'll use
+# our own version of this method.
+{
+    no strict 'refs';
+    *{"Net::SPDY::Session::process_frame"} = sub {
+        my $self = shift;
+
+        my %frame = $self->{framer}->read_frame ();
+        return () unless %frame;
+
+        if (not $frame{control}) {
+            warn 'Not implemented: Data frame received';
+            return %frame;
+        }
+
+        if ($frame{type} == Net::SPDY::Framer::SYN_STREAM) {
+        } elsif ($frame{type} == Net::SPDY::Framer::SETTINGS) {
+            $self->got_settings (%frame);
+        } elsif ($frame{type} == Net::SPDY::Framer::PING) {
+            $self->{framer}->write_ping (
+                flags => 0,
+                id => $frame{id},
+            );
+        } elsif ($frame{type} == Net::SPDY::Framer::GOAWAY) {
+            $self->close (0);
+        } elsif ($frame{type} == Net::SPDY::Framer::HEADERS) {
+            # We should remember values gotten here for stream
+            warn 'Not implemented: Got headers frame'
+        } else {
+            die 'Unknown frame type '.$frame{type};
+        }
+
+        return %frame;
+    };
+}
+
 sub new {
     my $class = shift;
     my $self = $class->SUPER::new(@_);
