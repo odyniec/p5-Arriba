@@ -87,21 +87,25 @@ sub read_request {
             $streams->{$frame{stream_id}} = { req => $req };
 
             my %frame_headers = @{$frame{headers}};
+            my @http_headers = @{$frame{headers}};
 
             my $headers = '';
             # Construct the HTTP request line
-            $headers .= delete($frame_headers{':method'})  . ' ' .
-                delete($frame_headers{':path'}) . ' ' .
-                delete($frame_headers{':version'}) . $CRLF;
+            $headers .= $frame_headers{':method'}  . ' ' .
+                $frame_headers{':path'} . ' ' .
+                $frame_headers{':version'} . $CRLF;
 
-            $req->{scheme} = delete $frame_headers{':scheme'};
+            $req->{scheme} = $frame_headers{':scheme'};
 
             if ($frame_headers{':host'}) {
-                $headers .= 'host: ' . delete($frame_headers{':host'}) . $CRLF;
+                $headers .= 'host: ' . $frame_headers{':host'} . $CRLF;
             }
             
-            map { $headers .= "$_: $frame_headers{$_}$CRLF" }
-                keys %frame_headers;
+            for (my $i = 0; $i < $#http_headers; $i += 2) {
+                if ($http_headers[$i] !~ /^:/) {
+                    $headers .= "$http_headers[$i]: $http_headers[$i+1]$CRLF";
+                }
+            }
 
             $headers .= $CRLF;
 
