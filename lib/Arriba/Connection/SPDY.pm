@@ -72,46 +72,50 @@ sub read_request {
     my $req;
 
     while (my %frame = $session->process_frame) {
-        if (exists $frame{type} &&
-            $frame{type} == Net::SPDY::Framer::SYN_STREAM)
-        {
-            # Request initiated
-            $req = Arriba::Request->new($self);
-            $req->{_spdy} = {
-                # Keep track of this request's stream ID
-                stream_id => $frame{stream_id},
-                # Save a reference to the frame that initiated this request
-                frame => \%frame,
-            };
+        if (exists $frame{type}) {
+            if ($frame{type} == Net::SPDY::Framer::SYN_STREAM) {
+                # Request initiated
+                $req = Arriba::Request->new($self);
+                $req->{_spdy} = {
+                    # Keep track of this request's stream ID
+                    stream_id => $frame{stream_id},
+                    # Save a reference to the frame that initiated this request
+                    frame => \%frame,
+                };
 
-            $streams->{$frame{stream_id}} = { req => $req };
+                $streams->{$frame{stream_id}} = { req => $req };
 
-            my %frame_headers = @{$frame{headers}};
-            my @http_headers = @{$frame{headers}};
+                my %frame_headers = @{$frame{headers}};
+                my @http_headers = @{$frame{headers}};
 
-            my $headers = '';
-            # Construct the HTTP request line
-            $headers .= $frame_headers{':method'}  . ' ' .
-                $frame_headers{':path'} . ' ' .
-                $frame_headers{':version'} . $CRLF;
+                my $headers = '';
+                # Construct the HTTP request line
+                $headers .= $frame_headers{':method'}  . ' ' .
+                    $frame_headers{':path'} . ' ' .
+                    $frame_headers{':version'} . $CRLF;
 
-            $req->{scheme} = $frame_headers{':scheme'};
+                $req->{scheme} = $frame_headers{':scheme'};
 
-            if ($frame_headers{':host'}) {
-                $headers .= 'host: ' . $frame_headers{':host'} . $CRLF;
-            }
-            
-            for (my $i = 0; $i < $#http_headers; $i += 2) {
-                if ($http_headers[$i] !~ /^:/) {
-                    $headers .= "$http_headers[$i]: $http_headers[$i+1]$CRLF";
+                if ($frame_headers{':host'}) {
+                    $headers .= 'host: ' . $frame_headers{':host'} . $CRLF;
                 }
+                
+                for (my $i = 0; $i < $#http_headers; $i += 2) {
+                    if ($http_headers[$i] !~ /^:/) {
+                        $headers .= "$http_headers[$i]: $http_headers[$i+1]$CRLF";
+                    }
+                }
+
+                $headers .= $CRLF;
+
+                $req->{headers} = $headers;
             }
-
-            $headers .= $CRLF;
-
-            $req->{headers} = $headers;
+            else {
+                # FIXME: Other cases
+                next;
+            }
         }
-        # Existing stream ID
+        # Data frame - check for existing stream ID
         elsif (my $stream = $streams->{$frame{stream_id}}) {
             # Grab the corresponding request
             $req = $stream->{req};
@@ -123,6 +127,7 @@ sub read_request {
         }
 
         if (!$frame{control}) {
+            # TODO: Move the above check for existing stream ID in here?
             # Data frame
             if (!$req->{body_stream}) {
                 # TODO: Initialize with content length?
@@ -147,7 +152,7 @@ sub write_response {
 
     my $status = $res->[0];
 
-    my @frame_headers = (
+    my %frame_headers = (
         ':version' => 'HTTP/1.1',
         ':status' => "$status " . status_message($status),
         'date' => HTTP::Date::time2str(),
@@ -156,32 +161,44 @@ sub write_response {
 
     Plack::Util::header_iter($res->[1], sub {
         my ($k, $v) = @_;
-        push @frame_headers, lc $k, $v;
+        if (exists $frame_headers{lc $k}) {
+            if (ref $frame_headers{lc $k} ne 'ARRAY') {
+                $frame_headers{lc $k} = [ $frame_headers{lc $k} ];
+            }
+            push @{$frame_headers{lc $k}}, $v;
+        }
+        else {
+            $frame_headers{lc $k} = $v;
+        }
     });
-
-    my $data;
-
-    if (defined $res->[2]) {
-        Plack::Util::foreach($res->[2], sub {
-            $data .= $_[0];
-        });
-    }
 
     my %frame = (
         type => Net::SPDY::Framer::SYN_REPLY,
         stream_id => $req->{_spdy}->{stream_id},
-        headers => [ @frame_headers ],
-        data => $data,
+        headers => [ %frame_headers ],
         control => 1,
+        flags => 0,
     );
 
-    $self->{_spdy}->{session}->{framer}->write_frame(%frame);
+    my $framer = $self->{_spdy}->{session}->{framer};
 
-    delete $frame{type};
-    $frame{control} = 0;
-    $frame{flags} = Net::SPDY::Framer::FLAG_FIN;
+    if (defined $res->[2]) {
+        Plack::Util::foreach($res->[2], sub {
+            # Send the previous frame
+            $framer->write_frame(%frame);
 
-    $self->{_spdy}->{session}->{framer}->write_frame(%frame);
+            %frame = (
+                stream_id => $req->{_spdy}->{stream_id},
+                data => $_[0],
+                control => 0,
+                flags => 0,
+            );
+        });
+    }
+
+    $frame{flags} |= Net::SPDY::Framer::FLAG_FIN;
+
+    $framer->write_frame(%frame);
 }
 
 1;
