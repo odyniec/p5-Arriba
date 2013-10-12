@@ -147,7 +147,7 @@ sub write_response {
 
     my $status = $res->[0];
 
-    my %frame_headers = (
+    my @frame_headers = (
         ':version' => 'HTTP/1.1',
         ':status' => "$status " . status_message($status),
         'date' => HTTP::Date::time2str(),
@@ -156,7 +156,7 @@ sub write_response {
 
     Plack::Util::header_iter($res->[1], sub {
         my ($k, $v) = @_;
-        $frame_headers{lc $k} = $v;
+        push @frame_headers, lc $k, $v;
     });
 
     my $data;
@@ -170,7 +170,7 @@ sub write_response {
     my %frame = (
         type => Net::SPDY::Framer::SYN_REPLY,
         stream_id => $req->{_spdy}->{stream_id},
-        headers => [ %frame_headers ],
+        headers => [ @frame_headers ],
         data => $data,
         control => 1,
     );
