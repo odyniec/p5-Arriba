@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use HTTP::Date;
+use HTTP::Status qw(status_message);
 use IO::Socket qw(:crlf);
 use Net::SPDY::Session;
 use Plack::Util;
@@ -144,7 +145,7 @@ sub write_response {
 
     my %frame_headers = (
         ':version' => 'HTTP/1.1',
-        ':status' => $status,
+        ':status' => "$status " . status_message($status),
         'date' => HTTP::Date::time2str(),
         'server' => 'arriba', # FIXME
     );
