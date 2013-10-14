@@ -194,11 +194,28 @@ sub write_response {
                 flags => 0,
             );
         });
+
+        $frame{flags} |= Net::SPDY::Framer::FLAG_FIN;
+        $framer->write_frame(%frame);
     }
+    else {
+        return Plack::Util::inline_object
+            write => sub {
+                # Send the previous frame
+                $framer->write_frame(%frame);
 
-    $frame{flags} |= Net::SPDY::Framer::FLAG_FIN;
-
-    $framer->write_frame(%frame);
+                %frame = (
+                    stream_id => $req->{_spdy}->{stream_id},
+                    data => $_[0],
+                    control => 0,
+                    flags => 0,
+                );
+            },
+            close => sub {
+                $frame{flags} |= Net::SPDY::Framer::FLAG_FIN;
+                $framer->write_frame(%frame);
+            };
+    }
 }
 
 1;
