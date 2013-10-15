@@ -19,8 +19,7 @@ use Test::More;
     *{'Plack::LWPish::new'} = sub {
         my $class = shift;
         my $self  = bless {}, $class;
-        $self->{http} = @_ == 1 ? $_[0] :
-            HTTP::Tiny::SPDY->new(enable_SPDY => 1, @_);
+        $self->{http} = @_ == 1 ? $_[0] : HTTP::Tiny::SPDY->new(@_);
         $self;     
     };
 
