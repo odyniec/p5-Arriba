@@ -26,7 +26,7 @@ use base 'Arriba::Connection';
         return () unless %frame;
 
         if (not $frame{control}) {
-            warn 'Not implemented: Data frame received';
+            #warn 'Not implemented: Data frame received';
             return %frame;
         }
 
@@ -42,7 +42,8 @@ use base 'Arriba::Connection';
             $self->close (0);
         } elsif ($frame{type} == Net::SPDY::Framer::HEADERS) {
             # We should remember values gotten here for stream
-            warn 'Not implemented: Got headers frame'
+            #warn 'Not implemented: Got headers frame'
+        } elsif ($frame{type} == Net::SPDY::Framer::WINDOW_UPDATE) {
         } else {
             die 'Unknown frame type '.$frame{type};
         }
