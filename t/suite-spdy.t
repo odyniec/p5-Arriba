@@ -13,7 +13,6 @@ use Test::More;
     no strict 'refs';
     no warnings 'redefine';
     
-    my $_Plack_LWPish_new = \&Plack::LWPish::new;
     my $_Plack_LWPish_request = \&Plack::LWPish::request;
 
     *{'Plack::LWPish::new'} = sub {
