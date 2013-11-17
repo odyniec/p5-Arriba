@@ -37,4 +37,17 @@ Launch an HTTPS server with SPDY support:
     arriba --listen :5443:ssl --ssl-cert cert.pem --ssl-key key.pem \
         --enable-spdy
 
+=head1 OPTIONS
+
+Arriba recognizes most of the options supported by L<Starman> -- see L<starman>
+for a list of those.
+
+=over 4
+
+=item --enable-spdy
+
+Enable SPDY support on SSL ports.
+
+=back
+
 =cut
