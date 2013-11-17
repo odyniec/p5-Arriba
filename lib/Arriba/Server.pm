@@ -27,30 +27,6 @@ sub sig_hup {
     $self->hup_children;
 }
 
-sub parse_listen_options {
-    my ($listen_options, $listen_ssl) = @_;
-    my ($host, $port, $proto);
-
-    # Strip off the leading colon, if present
-    ($listen_ssl ||= 0) =~ s/^://;
-
-    for my $listen (@$listen_options) {
-        if ($listen =~ /:/) {
-            my($h, $p) = split /:/, $listen, 2;
-            push @$host, $h || '*';
-            push @$port, $p;
-            push @$proto, $listen_ssl eq '*' || $p == $listen_ssl ?
-                'ssl' : 'tcp';
-        } else {
-            push @$host, 'localhost';
-            push @$port, $listen;
-            push @$proto, 'unix';
-        }
-    }
-
-    return ($host, $port, $proto);
-}
-
 sub run {
     my ($self, $app, $options) = @_;
 
@@ -64,6 +40,12 @@ sub run {
     if ($options->{daemonize}) {
         $extra{setsid} = $extra{background} = 1;
     }
+    if ($options->{ssl_cert}) {
+        $extra{SSL_cert_file} = $options->{ssl_cert};
+    }
+    if ($options->{ssl_key}) {
+        $extra{SSL_key_file} = $options->{ssl_key};
+    }
     if (!exists $options->{keepalive}) {
         $options->{keepalive} = 1;
     }
@@ -71,17 +53,33 @@ sub run {
         $options->{keepalive_timeout} = 1;
     }
 
-    my ($host, $port, $proto) = parse_listen_options($options->{listen} ||
-        [ "$options->{host}:$options->{port}" ], $options->{listen_ssl});
+    my @port;
+    for my $listen (@{$options->{listen} || [ "$options->{host}:$options->{port}" ]}) {
+        my %listen;
+        if ($listen =~ /:/) {
+            my($h, $p, $opt) = split /:/, $listen, 3;
+            $listen{host} = $h if $h;
+            $listen{port} = $p;
+            $listen{proto} = 'ssl' if 'ssl' eq lc $opt;
+        }
+        else {
+            %listen = (
+                host  => 'localhost',
+                port  => $listen,
+                proto => 'unix',
+            );
+        }
+        push @port, \%listen;
+    }
 
     my $workers = $options->{workers} || 5;
 
     local @ARGV = ();
 
     $self->SUPER::run(
-        port => $port,
-        host => $host,
-        proto => $proto,
+        port => \@port,
+        host => '*',
+        proto => $options->{ssl} ? 'ssl' : 'tcp',
         serialize => 'flock',
         log_level => DEBUG ? 4 : 2,
         ($options->{error_log} ? ( log_file => $options->{error_log} ) : () ),
@@ -132,13 +130,14 @@ sub pre_bind {
 sub pre_loop_hook {
     my $self = shift;
  
-    my $host = $self->{server}->{host}->[0];
     my $port = $self->{server}->{port}->[0];
- 
+    my $proto = $port->{proto} eq 'ssl'  ? 'https' :
+                $port->{proto} eq 'unix' ? 'unix' : 'http';
+
     $self->{options}{server_ready}->({
-        host => $host,
-        port => $port,
-        proto => $port =~ /unix/ ? 'unix' : 'http',
+        host => $port->{host},
+        port => $port->{port},
+        proto => $proto,
         server_software => 'Arriba',
     }) if $self->{options}{server_ready};
  

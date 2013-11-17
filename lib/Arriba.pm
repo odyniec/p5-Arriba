@@ -17,17 +17,17 @@ Launch a plain HTTP server listening on port 5080:
 
 Launch an HTTPS server on port 5443, no SPDY:
 
-    arriba --listen :5443 --listen-ssl 5443 --ssl-cert-file cert.pem \
-        --ssl-key-file key.pem
+    arriba --listen :5443:ssl --ssl-cert cert.pem --ssl-key key.pem
 
 Launch an HTTPS server with SPDY support:
 
-    arriba --listen :5443 --listen-ssl 5443 --ssl-cert-file cert.pem \
-        --ssl-key-file key.pem --enable-spdy
+    arriba --listen :5443:ssl --ssl-cert cert.pem --ssl-key key.pem \
+        --enable-spdy
 
 =head1 DESCRIPTION
 
-Description coming soonish.
+Arriba is a PSGI web server based on L<Starman> and sharing most of its
+features, with added support for the SPDY protocol.
 
 =head1 ACKNOWLEDGEMENTS
 

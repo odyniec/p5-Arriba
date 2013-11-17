@@ -39,8 +39,7 @@ my $url_scheme_test = sub {
 @Plack::Test::Suite::TEST = map { $_->[0] eq 'psgi.url_scheme' ?
     [ $_->[0], $url_scheme_test, $_->[2] ] : $_ } @Plack::Test::Suite::TEST;
 
-Plack::Test::Suite->run_server_tests('Arriba', undef, undef, listen_ssl => '*', 
-    ssl_cert_file => 'certs/server-cert.pem', 
-    ssl_key_file => 'certs/server-key.pem');
+Plack::Test::Suite->run_server_tests('Arriba', undef, undef, ssl => 1, 
+    ssl_cert => 'certs/server-cert.pem', ssl_key => 'certs/server-key.pem');
 
 done_testing();
