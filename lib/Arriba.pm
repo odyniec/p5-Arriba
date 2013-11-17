@@ -29,6 +29,9 @@ Launch an HTTPS server with SPDY support:
 Arriba is a PSGI web server based on L<Starman> and sharing most of its
 features, with added support for the SPDY protocol.
 
+B<WARNING:> Arriba is still in early stage of development and is not ready for
+production use.
+
 =head1 ACKNOWLEDGEMENTS
 
 Basic server code and plain HTTP connection support is based on L<Starman>,
