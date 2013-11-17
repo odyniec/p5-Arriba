@@ -1,10 +1,10 @@
 package Arriba;
 
-# ABSTRACT: PSGI web server with SPDY support
-
 use strict;
 
-our $VERSION = '0.01';
+# ABSTRACT: PSGI web server with SPDY support
+
+# VERSION
 
 1;
 __END__
@@ -42,4 +42,3 @@ L<Starman>
 L<Net::Server::PreFork>
 
 =cut
-
