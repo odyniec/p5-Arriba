@@ -208,6 +208,7 @@ sub write_response {
         syswrite $self->{client}, "0$CRLF$CRLF" if $chunked;
     }
     else {
+        # TODO: Above loop also needed here
         return Plack::Util::inline_object
             write => sub {
                 my $buf = $_[0];
