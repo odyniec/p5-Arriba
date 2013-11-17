@@ -17,6 +17,7 @@ use base 'Arriba::Connection';
 # process_frame method, which breaks things. Until that gets fixed, we'll use
 # our own version of this method.
 {
+    ## no critic
     no strict 'refs';
     no warnings 'redefine';
     *{"Net::SPDY::Session::process_frame"} = sub {
