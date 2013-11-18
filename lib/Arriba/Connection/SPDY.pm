@@ -11,7 +11,7 @@ use Plack::Util;
 
 use Arriba::Request;
 
-use base 'Arriba::Connection';
+use parent 'Arriba::Connection';
 
 # The current version of Net::SPDY::Session has some debugging code in the
 # process_frame method, which breaks things. Until that gets fixed, we'll use

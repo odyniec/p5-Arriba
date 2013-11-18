@@ -9,7 +9,7 @@ use IO::Socket qw(:crlf);
 use Plack::Util;
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 
-use base 'Arriba::Connection';
+use parent 'Arriba::Connection';
 
 sub new {
     my $class = shift;

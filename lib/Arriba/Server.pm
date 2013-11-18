@@ -3,7 +3,7 @@ package Arriba::Server;
 use warnings;
 use strict;
 
-use base 'Net::Server::PreFork';
+use parent 'Net::Server::PreFork';
 
 use HTTP::Date;
 use HTTP::Status qw(status_message);
